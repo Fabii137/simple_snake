@@ -45,16 +45,15 @@ typedef struct {
   size_t size;
 } LinkedList;
 
-void linked_list_init(LinkedList **list) {
-  *list = (LinkedList *)malloc(sizeof(LinkedList));
-  (*list)->head = NULL;
-  (*list)->tail = NULL;
-  (*list)->size = 0;
+void linked_list_init(LinkedList *list) {
+  list->head = NULL;
+  list->tail = NULL;
+  list->size = 0;
 }
 
 void linked_list_free(LinkedList *list) {
   if (list->size == 0) {
-    goto free_list;
+    return;
   }
 
   Node *current = list->head;
@@ -64,10 +63,6 @@ void linked_list_free(LinkedList *list) {
     node_free(current);
     current = next;
   }
-
-free_list:
-  free(list);
-  list = NULL;
 }
 
 void linked_list_push_front(LinkedList *list, Vector2i value) {
@@ -157,7 +152,7 @@ typedef struct {
 } Cell;
 
 typedef struct {
-  LinkedList *positions;
+  LinkedList positions;
 } Snake;
 
 typedef struct {
@@ -198,38 +193,38 @@ void cell_draw(Cell cell) {
 
 void snake_init(Game *game) {
   Snake *snake = &game->snake;
-  LinkedList *positions;
+  LinkedList positions;
   linked_list_init(&positions);
   snake->positions = positions;
 
   Vector2i center = {GRID_COLS / 2, GRID_ROWS / 2};
-  linked_list_push_front(snake->positions, center);
+  linked_list_push_front(&snake->positions, center);
   cell_set_state(game, center, SNAKE_HEAD);
 }
 
 void snake_add_head(Game *game, Vector2i new_head_pos) {
   Snake *snake = &game->snake;
 
-  cell_set_state(game, linked_list_get_head_val(snake->positions),
+  cell_set_state(game, linked_list_get_head_val(&snake->positions),
                  SNAKE_BODY); // change old head to body
 
-  linked_list_push_front(snake->positions, new_head_pos);
+  linked_list_push_front(&snake->positions, new_head_pos);
   cell_set_state(game, new_head_pos, SNAKE_HEAD);
 }
 
 void snake_move(Game *game, Vector2i new_head_pos) {
   Snake *snake = &game->snake;
 
-  if (snake->positions->size > 1) {
-    cell_set_state(game, linked_list_get_head_val(snake->positions),
+  if (snake->positions.size > 1) {
+    cell_set_state(game, linked_list_get_head_val(&snake->positions),
                    SNAKE_BODY); // change old head to body
   }
 
-  Vector2i tail = linked_list_get_tail_val(snake->positions);
-  linked_list_pop_back(snake->positions);
+  Vector2i tail = linked_list_get_tail_val(&snake->positions);
+  linked_list_pop_back(&snake->positions);
   cell_set_state(game, tail, EMPTY);
 
-  linked_list_push_front(snake->positions, new_head_pos);
+  linked_list_push_front(&snake->positions, new_head_pos);
   cell_set_state(game, new_head_pos, SNAKE_HEAD);
 }
 
@@ -238,7 +233,7 @@ void place_food(Game *game) {
   do {
     pos.x = rand() % GRID_COLS;
     pos.y = rand() % GRID_ROWS;
-  } while (linked_list_contains(game->snake.positions, pos));
+  } while (linked_list_contains(&game->snake.positions, pos));
   game->food = pos;
   cell_set_state(game, pos, FOOD);
 }
@@ -268,7 +263,7 @@ void game_init(Game *game) {
 }
 
 void game_destroy(Game *game) {
-  linked_list_free(game->snake.positions);
+  linked_list_free(&game->snake.positions);
   game = NULL;
 }
 
@@ -282,14 +277,14 @@ bool is_colliding(Game *game, Vector2i new_head_pos) {
   enum CellState state = cell_get_state(game, new_head_pos);
   bool growing = state == FOOD;
 
-  Vector2i tail = linked_list_get_tail_val(snake->positions);
+  Vector2i tail = linked_list_get_tail_val(&snake->positions);
   // allow going into prev tail if not growing
   if (!growing && vector2i_equals(new_head_pos, tail)) {
     return false;
   }
 
   // check self
-  if (linked_list_contains(snake->positions, new_head_pos))
+  if (linked_list_contains(&snake->positions, new_head_pos))
     return true;
 
   return false;
@@ -297,7 +292,7 @@ bool is_colliding(Game *game, Vector2i new_head_pos) {
 
 bool game_update(Game *game, enum Direction current_direction) {
   Snake *snake = &game->snake;
-  Vector2i prev_head_pos = linked_list_get_head_val(snake->positions);
+  Vector2i prev_head_pos = linked_list_get_head_val(&snake->positions);
   Vector2i new_head_pos =
       vector2i_add(prev_head_pos, parse_direction(current_direction));
 
@@ -345,7 +340,7 @@ int main() {
   Game game;
   game_init(&game);
   float snake_timer = 0.f;
-  float snake_speed = 5.f; // moves per second
+  float snake_speed = 10.f; // moves per second
   enum Direction current_direction = LEFT;
   enum Direction queued_direction = NONE;
 
