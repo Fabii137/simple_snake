@@ -1,5 +1,6 @@
 ﻿#include "raylib.h"
 
+#include <assert.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -34,9 +35,9 @@ typedef struct node {
   struct node *prev;
 } Node;
 
-void node_free(Node *node) {
-  free(node);
-  node = NULL;
+void node_free(Node **node) {
+  free(*node);
+  *node = NULL;
 }
 
 typedef struct {
@@ -49,20 +50,6 @@ void linked_list_init(LinkedList *list) {
   list->head = NULL;
   list->tail = NULL;
   list->size = 0;
-}
-
-void linked_list_free(LinkedList *list) {
-  if (list->size == 0) {
-    return;
-  }
-
-  Node *current = list->head;
-
-  while (current != NULL) {
-    Node *next = current->next;
-    node_free(current);
-    current = next;
-  }
 }
 
 void linked_list_push_front(LinkedList *list, Vector2i value) {
@@ -93,7 +80,7 @@ void linked_list_pop_back(LinkedList *list) {
 
   Node *prev_tail = list->tail;
   Node *new_tail = prev_tail->prev;
-  node_free(prev_tail);
+  node_free(&prev_tail);
   list->size--;
 
   if (list->size == 0) {
@@ -105,10 +92,13 @@ void linked_list_pop_back(LinkedList *list) {
   list->tail = new_tail;
 }
 
-bool linked_list_contains(LinkedList *list, Vector2i value) {
-  if (list->size == 0) {
-    return false;
+void linked_list_free(LinkedList *list) {
+  while (list->head != NULL) {
+    linked_list_pop_back(list);
   }
+}
+
+bool linked_list_contains(LinkedList *list, Vector2i value) {
   Node *current = list->head;
   while (current != NULL) {
     if (vector2i_equals(current->value, value)) {
@@ -120,10 +110,12 @@ bool linked_list_contains(LinkedList *list, Vector2i value) {
 }
 
 Vector2i linked_list_get_head_val(LinkedList *list) {
+  assert(list->size > 0 && "Could not get head: List is empty");
   return list->head->value;
 }
 
 Vector2i linked_list_get_tail_val(LinkedList *list) {
+  assert(list->size > 0 && "Could not get tail: List is empty");
   return list->tail->value;
 }
 
@@ -140,6 +132,8 @@ Vector2i parse_direction(enum Direction direction) {
   case RIGHT:
     return (Vector2i){1, 0};
   case NONE:
+    return (Vector2i){0, 0};
+  default:
     return (Vector2i){0, 0};
   }
 }
@@ -193,9 +187,7 @@ void cell_draw(Cell cell) {
 
 void snake_init(Game *game) {
   Snake *snake = &game->snake;
-  LinkedList positions;
-  linked_list_init(&positions);
-  snake->positions = positions;
+  linked_list_init(&snake->positions);
 
   Vector2i center = {GRID_COLS / 2, GRID_ROWS / 2};
   linked_list_push_front(&snake->positions, center);
@@ -262,10 +254,7 @@ void game_init(Game *game) {
   game->score = 0;
 }
 
-void game_destroy(Game *game) {
-  linked_list_free(&game->snake.positions);
-  game = NULL;
-}
+void game_destroy(Game *game) { linked_list_free(&game->snake.positions); }
 
 bool is_colliding(Game *game, Vector2i new_head_pos) {
   // check bounds
