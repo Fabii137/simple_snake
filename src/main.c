@@ -221,11 +221,18 @@ void snake_move(Game *game, Vector2i new_head_pos) {
 }
 
 void place_food(Game *game) {
-  Vector2i pos;
-  do {
-    pos.x = rand() % GRID_COLS;
-    pos.y = rand() % GRID_ROWS;
-  } while (linked_list_contains(&game->snake.positions, pos));
+  Vector2i empty_cells[GRID_COLS * GRID_ROWS];
+  int count = 0;
+
+  for (int x = 0; x < GRID_COLS; x++) {
+    for (int y = 0; y < GRID_ROWS; y++) {
+      if (cell_get_state(game, (Vector2i){x, y}) == EMPTY) {
+        empty_cells[count++] = (Vector2i){x, y};
+      }
+    }
+  }
+
+  Vector2i pos = empty_cells[rand() % count];
   game->food = pos;
   cell_set_state(game, pos, FOOD);
 }
@@ -244,6 +251,13 @@ void grid_draw(Cell grid[GRID_COLS][GRID_ROWS]) {
       cell_draw(grid[x][y]);
     }
   }
+}
+
+bool check_win(Game *game) {
+  if (game->snake.positions.size != GRID_ROWS * GRID_COLS)
+    return false;
+
+  return true;
 }
 
 void game_init(Game *game) {
@@ -280,6 +294,10 @@ bool is_colliding(Game *game, Vector2i new_head_pos) {
 }
 
 bool game_update(Game *game, enum Direction current_direction) {
+  if (check_win(game)) {
+    printf("You won! Well played.\n");
+  }
+
   Snake *snake = &game->snake;
   Vector2i prev_head_pos = linked_list_get_head_val(&snake->positions);
   Vector2i new_head_pos =
@@ -298,6 +316,7 @@ bool game_update(Game *game, enum Direction current_direction) {
     break;
   case FOOD:
     snake_add_head(game, new_head_pos);
+    place_food(game);
     place_food(game);
     game->score++;
     break;
