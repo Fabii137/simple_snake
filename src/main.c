@@ -317,7 +317,6 @@ bool game_update(Game *game, enum Direction current_direction) {
   case FOOD:
     snake_add_head(game, new_head_pos);
     place_food(game);
-    place_food(game);
     game->score++;
     break;
   default:
