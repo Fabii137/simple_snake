@@ -17,6 +17,8 @@
 #define CELL_WIDTH SCREEN_WIDTH / GRID_COLS
 #define CELL_HEIGHT SCREEN_HEIGHT / GRID_ROWS
 
+#define SNAKE_SPEED 10.f // moves per second
+
 typedef struct {
   int x, y;
 } Vector2i;
@@ -346,7 +348,6 @@ int main() {
   Game game;
   game_init(&game);
   float snake_timer = 0.f;
-  float snake_speed = 10.f; // moves per second
   enum Direction current_direction = LEFT;
   enum Direction queued_direction = NONE;
 
@@ -355,7 +356,7 @@ int main() {
 
     float dt = GetFrameTime();
     snake_timer += dt;
-    if (snake_timer >= 1.f / snake_speed) {
+    if (snake_timer >= 1.f / SNAKE_SPEED) {
       if (queued_direction != NONE) {
         current_direction = queued_direction;
         queued_direction = NONE;
