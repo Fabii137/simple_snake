@@ -232,7 +232,7 @@ void place_food(Game *game) {
     }
   }
 
-  Vector2i pos = empty_cells[rand() % count];
+  Vector2i pos = empty_cells[GetRandomValue(0, count - 1)];
   game->food = pos;
   cell_set_state(game, pos, FOOD);
 }
@@ -261,7 +261,6 @@ bool check_win(Game *game) {
 }
 
 void game_init(Game *game) {
-  srand(time(NULL));
   grid_init(game->grid);
   snake_init(game);
   place_food(game);
