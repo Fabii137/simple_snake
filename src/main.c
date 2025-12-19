@@ -22,18 +22,20 @@
 
 typedef struct {
   int x, y;
-} Vector2i;
+} Vec2i;
 
-bool vector2i_equals(Vector2i v1, Vector2i v2) {
-  return v1.x == v2.x && v1.y == v2.y;
+bool vec2i_equals(Vec2i v1, Vec2i v2) { return v1.x == v2.x && v1.y == v2.y; }
+
+Vec2i vec2i_add(Vec2i v1, Vec2i v2) {
+  return (Vec2i){v1.x + v2.x, v1.y + v2.y};
 }
 
-Vector2i vector2i_add(Vector2i v1, Vector2i v2) {
-  return (Vector2i){v1.x + v2.x, v1.y + v2.y};
+Vec2i vec2i_sub(Vec2i v1, Vec2i v2) {
+  return (Vec2i){v1.x - v2.x, v2.y - v2.y};
 }
 
 typedef struct node {
-  Vector2i value;
+  Vec2i value;
   struct node *next;
   struct node *prev;
 } Node;
@@ -55,7 +57,7 @@ void linked_list_init(LinkedList *list) {
   list->size = 0;
 }
 
-void linked_list_push_front(LinkedList *list, Vector2i value) {
+void linked_list_push_front(LinkedList *list, Vec2i value) {
   Node *new_head = (Node *)malloc(sizeof(Node));
   if (new_head == NULL) {
     printf("Memory allocation failed!\n");
@@ -101,10 +103,10 @@ void linked_list_free(LinkedList *list) {
   }
 }
 
-bool linked_list_contains(LinkedList *list, Vector2i value) {
+bool linked_list_contains(LinkedList *list, Vec2i value) {
   Node *current = list->head;
   while (current != NULL) {
-    if (vector2i_equals(current->value, value)) {
+    if (vec2i_equals(current->value, value)) {
       return true;
     }
     current = current->next;
@@ -112,39 +114,39 @@ bool linked_list_contains(LinkedList *list, Vector2i value) {
   return false;
 }
 
-Vector2i linked_list_get_head_val(LinkedList *list) {
+Vec2i linked_list_get_head_val(LinkedList *list) {
   assert(list->size > 0 && "Could not get head: List is empty");
   return list->head->value;
 }
 
-Vector2i linked_list_get_tail_val(LinkedList *list) {
+Vec2i linked_list_get_tail_val(LinkedList *list) {
   assert(list->size > 0 && "Could not get tail: List is empty");
   return list->tail->value;
 }
 
 enum Direction { UP, LEFT, DOWN, RIGHT, NONE };
 
-Vector2i parse_direction(enum Direction direction) {
+Vec2i parse_direction(enum Direction direction) {
   switch (direction) {
   case UP:
-    return (Vector2i){0, -1};
+    return (Vec2i){0, -1};
   case LEFT:
-    return (Vector2i){-1, 0};
+    return (Vec2i){-1, 0};
   case DOWN:
-    return (Vector2i){0, 1};
+    return (Vec2i){0, 1};
   case RIGHT:
-    return (Vector2i){1, 0};
+    return (Vec2i){1, 0};
   case NONE:
-    return (Vector2i){0, 0};
+    return (Vec2i){0, 0};
   default:
-    return (Vector2i){0, 0};
+    return (Vec2i){0, 0};
   }
 }
 
 enum CellState { EMPTY, SNAKE_BODY, SNAKE_HEAD, FOOD };
 
 typedef struct {
-  Vector2i pos;
+  Vec2i pos;
   enum CellState state;
 } Cell;
 
@@ -155,16 +157,16 @@ typedef struct {
 typedef struct {
   Cell grid[GRID_COLS][GRID_ROWS];
   Snake snake;
-  Vector2i food;
+  Vec2i food;
   int score;
 } Game;
 
-void cell_set_state(Game *game, Vector2i pos, enum CellState state) {
+void cell_set_state(Game *game, Vec2i pos, enum CellState state) {
   Cell *cell = &game->grid[pos.x][pos.y];
   cell->state = state;
 }
 
-enum CellState cell_get_state(Game *game, Vector2i pos) {
+enum CellState cell_get_state(Game *game, Vec2i pos) {
   return game->grid[pos.x][pos.y].state;
 }
 
@@ -192,12 +194,12 @@ void snake_init(Game *game) {
   Snake *snake = &game->snake;
   linked_list_init(&snake->positions);
 
-  Vector2i center = {GRID_COLS / 2, GRID_ROWS / 2};
+  Vec2i center = {GRID_COLS / 2, GRID_ROWS / 2};
   linked_list_push_front(&snake->positions, center);
   cell_set_state(game, center, SNAKE_HEAD);
 }
 
-void snake_add_head(Game *game, Vector2i new_head_pos) {
+void snake_add_head(Game *game, Vec2i new_head_pos) {
   Snake *snake = &game->snake;
 
   cell_set_state(game, linked_list_get_head_val(&snake->positions),
@@ -207,7 +209,7 @@ void snake_add_head(Game *game, Vector2i new_head_pos) {
   cell_set_state(game, new_head_pos, SNAKE_HEAD);
 }
 
-void snake_move(Game *game, Vector2i new_head_pos) {
+void snake_move(Game *game, Vec2i new_head_pos) {
   Snake *snake = &game->snake;
 
   if (snake->positions.size > 1) {
@@ -215,7 +217,7 @@ void snake_move(Game *game, Vector2i new_head_pos) {
                    SNAKE_BODY); // change old head to body
   }
 
-  Vector2i tail = linked_list_get_tail_val(&snake->positions);
+  Vec2i tail = linked_list_get_tail_val(&snake->positions);
   linked_list_pop_back(&snake->positions);
   cell_set_state(game, tail, EMPTY);
 
@@ -224,18 +226,18 @@ void snake_move(Game *game, Vector2i new_head_pos) {
 }
 
 void place_food(Game *game) {
-  Vector2i empty_cells[GRID_COLS * GRID_ROWS];
+  Vec2i empty_cells[GRID_COLS * GRID_ROWS];
   int count = 0;
 
   for (int x = 0; x < GRID_COLS; x++) {
     for (int y = 0; y < GRID_ROWS; y++) {
-      if (cell_get_state(game, (Vector2i){x, y}) == EMPTY) {
-        empty_cells[count++] = (Vector2i){x, y};
+      if (cell_get_state(game, (Vec2i){x, y}) == EMPTY) {
+        empty_cells[count++] = (Vec2i){x, y};
       }
     }
   }
 
-  Vector2i pos = empty_cells[GetRandomValue(0, count - 1)];
+  Vec2i pos = empty_cells[GetRandomValue(0, count - 1)];
   game->food = pos;
   cell_set_state(game, pos, FOOD);
 }
@@ -243,7 +245,7 @@ void place_food(Game *game) {
 void grid_init(Cell grid[GRID_COLS][GRID_ROWS]) {
   for (int x = 0; x < GRID_COLS; x++) {
     for (int y = 0; y < GRID_ROWS; y++) {
-      grid[x][y] = (Cell){(Vector2i){x, y}, EMPTY};
+      grid[x][y] = (Cell){(Vec2i){x, y}, EMPTY};
     }
   }
 }
@@ -272,7 +274,7 @@ void game_init(Game *game) {
 
 void game_destroy(Game *game) { linked_list_free(&game->snake.positions); }
 
-bool is_colliding(Game *game, Vector2i new_head_pos) {
+bool is_colliding(Game *game, Vec2i new_head_pos) {
   // check bounds
   if (new_head_pos.x < 0 || new_head_pos.y < 0 || new_head_pos.x >= GRID_COLS ||
       new_head_pos.y >= GRID_ROWS)
@@ -282,9 +284,9 @@ bool is_colliding(Game *game, Vector2i new_head_pos) {
   enum CellState state = cell_get_state(game, new_head_pos);
   bool growing = state == FOOD;
 
-  Vector2i tail = linked_list_get_tail_val(&snake->positions);
+  Vec2i tail = linked_list_get_tail_val(&snake->positions);
   // allow going into prev tail if not growing
-  if (!growing && vector2i_equals(new_head_pos, tail)) {
+  if (!growing && vec2i_equals(new_head_pos, tail)) {
     return false;
   }
 
@@ -302,9 +304,9 @@ bool game_update(Game *game, enum Direction current_direction) {
   }
 
   Snake *snake = &game->snake;
-  Vector2i prev_head_pos = linked_list_get_head_val(&snake->positions);
-  Vector2i new_head_pos =
-      vector2i_add(prev_head_pos, parse_direction(current_direction));
+  Vec2i prev_head_pos = linked_list_get_head_val(&snake->positions);
+  Vec2i new_head_pos =
+      vec2i_add(prev_head_pos, parse_direction(current_direction));
 
   if (is_colliding(game, new_head_pos)) {
     printf("You lost! Score: %d\n", game->score);
