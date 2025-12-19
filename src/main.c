@@ -7,6 +7,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define FPS 120
+
 #define SCREEN_WIDTH 1200
 #define SCREEN_HEIGHT 900
 
@@ -296,6 +298,7 @@ bool is_colliding(Game *game, Vector2i new_head_pos) {
 bool game_update(Game *game, enum Direction current_direction) {
   if (check_win(game)) {
     printf("You won! Well played.\n");
+    return false;
   }
 
   Snake *snake = &game->snake;
@@ -342,12 +345,12 @@ void handle_input(enum Direction current_direction,
 
 int main() {
   InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Snake");
-  SetTargetFPS(240);
+  SetTargetFPS(FPS);
 
   Game game;
   game_init(&game);
   float snake_timer = 0.f;
-  enum Direction current_direction = LEFT;
+  enum Direction current_direction = NONE;
   enum Direction queued_direction = NONE;
 
   while (!WindowShouldClose()) {
