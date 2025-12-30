@@ -5,7 +5,6 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 
 #define FPS 120
 
@@ -15,8 +14,8 @@
 #define GRID_ROWS 25
 #define GRID_COLS 25
 
-#define CELL_WIDTH SCREEN_WIDTH / GRID_COLS
-#define CELL_HEIGHT SCREEN_HEIGHT / GRID_ROWS
+#define CELL_WIDTH (SCREEN_WIDTH / GRID_COLS)
+#define CELL_HEIGHT (SCREEN_HEIGHT / GRID_ROWS)
 
 #define SNAKE_SPEED 10.f // moves per second
 
@@ -28,10 +27,6 @@ bool vec2i_equals(Vec2i v1, Vec2i v2) { return v1.x == v2.x && v1.y == v2.y; }
 
 Vec2i vec2i_add(Vec2i v1, Vec2i v2) {
   return (Vec2i){v1.x + v2.x, v1.y + v2.y};
-}
-
-Vec2i vec2i_sub(Vec2i v1, Vec2i v2) {
-  return (Vec2i){v1.x - v2.x, v2.y - v2.y};
 }
 
 typedef struct node {
